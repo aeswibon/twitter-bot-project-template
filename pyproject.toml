@@ -1,0 +1,9 @@
+[tool.isort]
+profile = "black"
+known_third_party = [
+  "django",
+  "drf_spectacular",
+  "environ",
+  "requests",
+  "rest_framework",
+]

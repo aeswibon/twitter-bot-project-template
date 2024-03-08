@@ -1,0 +1,40 @@
+name: Tweet
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *' # running every 30 minutes
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          pip install pipenv
+          pipenv install --system --categories "packages"
+      - name: Start django server
+        run: python manage.py runserver 9000 & # running the server in the background
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          REDIRECT_URI: ${{ secrets.REDIRECT_URI }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+      - name: Wait for server to be up
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 1
+          max_attempts: 5
+          command: curl -o /dev/null -s -w "%{http_code}\n" http://localhost:9000/ping/
+          on_retry_command: sleep 5
+      - name: Run script
+        run: python main.py

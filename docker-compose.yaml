@@ -1,0 +1,37 @@
+version: "3.8"
+networks:
+  default:
+   name: bot
+services:
+  db:
+    image: postgres:alpine
+    restart: always
+    env_file:
+      - ./docker/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:alpine
+    restart: always
+    env_file:
+      - ./docker/.env
+    volumes:
+      - redis_data:/data
+  backend:
+    image: bot_local
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    env_file:
+      - ./docker/.env
+    entrypoint: ["sh", "docker/dev.sh"]
+    volumes:
+      - .:/app
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+      - redis
+volumes:
+  postgres_data:
+  redis_data:
